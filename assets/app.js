@@ -116,6 +116,10 @@
     toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, 1800);
   }
 
+  function track(name, params) {
+    try { if (window.track) window.track(name, params); } catch (e) { /* ignore */ }
+  }
+
   function copyText(text, message) {
     if (!text) return;
     var done = function () { toast(message || '已复制'); };
@@ -475,6 +479,7 @@
   }
 
   function copyPromptText() {
+    track('copy_prompt', { count: state.selected.length });
     copyText(buildCopyText(), state.negative.trim() ? '已复制提示词 + 负面' : '已复制提示词');
   }
 
@@ -514,8 +519,11 @@
 
   function toggleTag(en) {
     var i = state.selected.indexOf(en);
-    if (i === -1) state.selected.push(en);
+    var added = i === -1;
+    if (added) state.selected.push(en);
     else state.selected.splice(i, 1);
+    var term = byEn.get(en);
+    track(added ? 'tag_add' : 'tag_remove', { lib: term ? term.primary : '', id: en });
     state.shown = Math.max(state.shown, PAGE);
     renderTags();
     renderBench();
@@ -532,6 +540,7 @@
     renderBench();
     saveSettings();
     writeHash();
+    track('recipe_apply', { id: r.id, recipe: r.name_zh, count: state.selected.length });
     toast('已套用：' + r.name_zh);
   }
 
@@ -566,6 +575,7 @@
     renderBench();
     saveSettings();
     writeHash();
+    track('random', { count: picked.length });
     toast('随机了一组');
   }
 
@@ -629,6 +639,7 @@
   /* ---------- bind ---------- */
 
   var qTimer = null;
+  var searchTrackTimer = null;
   el.q.addEventListener('input', function () {
     clearTimeout(qTimer);
     qTimer = setTimeout(function () {
@@ -636,6 +647,12 @@
       state.shown = PAGE;
       renderTags();
       writeHash();
+      clearTimeout(searchTrackTimer);
+      if (state.q) {
+        searchTrackTimer = setTimeout(function () {
+          track('search', { q: state.q.slice(0, 40), cat: state.cat });
+        }, 700);
+      }
     }, 90);
   });
 
@@ -700,6 +717,7 @@
     setActiveCategory();
     renderTags();
     writeHash();
+    track('category', { cat: state.cat });
   });
 
   el.nsfwBtn.addEventListener('click', function () {
@@ -711,7 +729,9 @@
   });
 
   el.themeBtn.addEventListener('click', function () {
-    setTheme(state.theme === 'dark' ? 'light' : 'dark');
+    var next = state.theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    track('theme', { mode: next });
   });
 
   el.moreBtn.addEventListener('click', function () {
@@ -758,7 +778,10 @@
 
   el.copyPrompt.addEventListener('click', copyPromptText);
   el.randomBtn.addEventListener('click', pickRandom);
-  el.copyLink.addEventListener('click', function () { copyText(location.href, '已复制链接'); });
+  el.copyLink.addEventListener('click', function () {
+    track('copy_link');
+    copyText(location.href, '已复制链接');
+  });
 
   el.benchFab.addEventListener('click', openSheet);
   el.benchClose.addEventListener('click', closeSheet);

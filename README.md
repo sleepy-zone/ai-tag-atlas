@@ -74,6 +74,14 @@ ai-tag-atlas/
 - **改视觉**：`assets/style.css` 顶部的 CSS 变量（深/浅两套 token）。
 - **改排序**：`assets/app.js` 的 `PROMPT_ORDER`。
 
+## 埋点
+
+- 使用 **Microsoft Clarity**，项目 ID `r1wmvdsf4a`（与 `ai-ref-library-cn` 相同）。
+- 本地 `localhost` / `127.0.0.1` / `file://` 不加载，避免测试流量污染线上数据。
+- 自定义事件：`search`、`category`、`tag_add`、`tag_remove`、`recipe_apply`、`copy_prompt`、`copy_link`、`random`、`theme`。
+- 调试：控制台执行 `window.__trackDebug = true` 可看到事件；`window.__trackLog` 保留最近 200 条。
+- 没有接 GA4。
+
 ## 许可
 
 - 站点代码：MIT（见 `LICENSE`）。
